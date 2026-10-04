@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>GCSE Revision Pro</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #94a3b8;
+            --sidebar-active: #ffffff;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --primary: #3b82f6;
+            --red: #ef4444;
+            --amber: #f59e0b;
+            --green: #10b981;
+            --rest: #8b5cf6;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { margin: 0; background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Navigation */
+        #sidebar { width: 260px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        #sidebar .logo { padding: 25px 20px; font-weight: 800; font-size: 1.4em; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        #sidebar nav { flex: 1; overflow-y: auto; padding-top: 10px; }
+        #sidebar a { padding: 15px 20px; color: var(--sidebar-text); text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.95em; cursor: pointer; transition: 0.2s; }
+        #sidebar a:hover { color: var(--sidebar-active); background: rgba(255,255,255,0.05); }
+        #sidebar a.active { color: var(--sidebar-active); background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--primary); font-weight: 600; }
+        
+        /* Main Content */
+        #main-content { flex: 1; overflow-y: auto; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--border); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
+        .header h1 { margin: 0; font-size: 1.8em; }
+        .header p { margin: 5px 0 0 0; color: var(--text-muted); }
+        
+        /* Layout Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid var(--border); }
+        .task-card { position: relative; border-left: 6px solid var(--border); cursor: pointer; transition: transform 0.2s; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .rag-red { border-left-color: var(--red); }
+        .rag-amber { border-left-color: var(--amber); }
+        .rag-green { border-left-color: var(--green); }
+        .task-rest { border-left-color: var(--rest); text-align: center; background: rgba(139, 92, 246, 0.05); }
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: 600; margin-bottom: 8px; }
+        .badge.neutral { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        
+        .task-subject { font-weight: 700; font-size: 1.1em; margin-bottom: 4px; }
+        .task-topic { color: var(--text-muted); font-size: 0.95em; margin-bottom: 15px; line-height: 1.4; }
+        
+        /* Timetable View Styling */
+        .day-group { margin-bottom: 25px; background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .day-header { background: #f8fafc; padding: 12px 20px; font-weight: 700; font-size: 1.1em; border-bottom: 1px solid var(--border); color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
+        .day-tasks-list { padding: 10px 20px; }
+        .day-task-item { padding: 12px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .day-task-item:hover { background: #f8fafc; border-radius: 6px; padding-left: 10px; padding-right: 10px; }
+        .day-task-item:last-child { border-bottom: none; }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        button { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85em; transition: 0.2s; }
+        .btn-complete { background: var(--green); color: white; }
+        .btn-complete:hover { background: #059669; }
+        .btn-catchup { background: var(--amber); color: white; }
+        .btn-catchup:hover { background: #d97706; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        
+        /* View specific */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-close { float: right; cursor: pointer; font-size: 1.5em; line-height: 1; margin-top: -5px; }
+        
+        input[type="date"], input[type="text"], input[type="url"], select { padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 10px; width: 100%; font-family: inherit; }
+
+        @media(max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { width: 100%; height: auto; flex-direction: row; flex-shrink: 0; overflow-x: auto; padding: 0; }
+            #sidebar .logo { display: none; }
+            #sidebar nav { display: flex; padding: 0; }
+            #sidebar a { padding: 15px; white-space: nowrap; border-left: none; border-bottom: 4px solid transparent; }
+            #sidebar a.active { border-left: none; border-bottom: 4px solid var(--primary); }
+            #main-content { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="logo">GCSE Planner Pro</div>
+        <nav>
+            <a onclick="navigate('today')" id="nav-today" class="active">🏠 Today</a>
+            <a onclick="navigate('timetable')" id="nav-timetable">📅 Timetable</a>
+            <a onclick="navigate('catchup')" id="nav-catchup">🔄 Catch-up</a>
+            <a onclick="navigate('homework')" id="nav-homework">📝 Homework</a>
+            <a onclick="navigate('flashcards')" id="nav-flashcards">🧠 Flashcards</a>
+            <a onclick="navigate('songs')" id="nav-songs">🎵 Songs</a>
+            <a onclick="navigate('progress')" id="nav-progress">📊 Progress</a>
+            <a onclick="navigate('settings')" id="nav-settings">💾 Data</a>
+        </nav>
+    </div>
+
+    <div id="main-content">
+        <!-- TODAY VIEW -->
+        <div id="view-today" class="view-section active">
+            <div class="header">
+                <div>
+                    <h1>Today's Revision</h1>
+                    <p id="today-date-display">Loading...</p>
+                </div>
+            </div>
+            <h3 id="phase-banner" style="color: var(--primary); margin-top: 0;"></h3>
+            <div id="today-tasks" class="grid"></div>
+        </div>
+
+        <!-- TIMETABLE VIEW -->
+        <div id="view-timetable" class="view-section">
+            <div class="header">
+                <div>
+                    <h1>Full Schedule</h1>
+                    <p>Master Schedule & Custom Topics</p>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-complete" onclick="openAddModal()">+ Add Custom Topic</button>
+                    <input type="text" id="timetable-search" placeholder="Search topics..." onkeyup="filterTimetable()" style="width: 150px; margin: 0;">
+                </div>
+            </div>
+            <div id="timetable-list"></div>
+        </div>
+
+        <!-- CATCH UP VIEW -->
+        <div id="view-catchup" class="view-section">
+            <div class="header">
+                <div>
+                    <h1>Catch-up Queue 🔄</h1>
+                    <p>Tasks you missed. Mark complete or reschedule to a new day.</p>
+                </div>
+            </div>
+            <div id="catchup-tasks" class="grid"></div>
+        </div>
+
+        <!-- HOMEWORK VIEW -->
+        <div id="view-homework" class="view-section">
+            <div class="header">
+                <div><h1>Homework Log 📝</h1><p>Track Sparx, Seneca, etc.</p></div>
+                <button onclick="document.getElementById('hw-modal').classList.add('active')" style="background: var(--primary); color: white;">+ Add Homework</button>
+            </div>
+            <div id="homework-list" class="grid"></div>
+        </div>
+
+        <!-- FLASHCARDS VIEW -->
+        <div id="view-flashcards" class="view-section">
+            <div class="header">
+                <div>
+                    <h1>Flashcards Spaced Repetition 🧠</h1>
+                    <p>Track external decks (Gizmo, Quizlet, Anki) & scheduled review intervals.</p>
+                </div>
+                <button onclick="document.getElementById('flashcard-modal').classList.add('active')" style="background: var(--primary); color: white;">+ Add Flashcard Deck</button>
+            </div>
+            <div id="flashcards-list" class="grid"></div>
+        </div>
+
+        <!-- SONGS VIEW -->
+        <div id="view-songs" class="view-section">
+            <div class="header">
+                <div>
+                    <h1>Revision Songs & Mnemonics 🎵</h1>
+                    <p>Access YouTube/Spotify links and manage spaced review intervals.</p>
+                </div>
+                <button onclick="document.getElementById('song-modal').classList.add('active')" style="background: var(--primary); color: white;">+ Add Song / Mnemonic</button>
+            </div>
+            <div id="songs-list" class="grid"></div>
+        </div>
+
+        <!-- PROGRESS VIEW -->
+        <div id="view-progress" class="view-section">
+            <div class="header"><h1>Progress & Stats 📊</h1></div>
+            <div id="stats-container" class="card"></div>
+        </div>
+        
+        <!-- SETTINGS VIEW -->
+        <div id="view-settings" class="view-section">
+            <div class="header"><h1>Settings & Backup 💾</h1></div>
+            <div class="card">
+                <h3>Backup Master Data</h3>
+                <button onclick="exportData()" style="background: var(--primary); color: white;">Export Data (.json)</button>
+                <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+                <h3>Emergency Reset</h3>
+                <button onclick="factoryReset()" style="background: var(--red); color: white;">Factory Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Topic Modal -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('add-modal').classList.remove('active')">&times;</span>
+            <h2>Add New Topic</h2>
+            <label style="font-weight: bold; font-size: 0.9em;">Date:</label>
+            <input type="date" id="add-date">
+            <label style="font-weight: bold; font-size: 0.9em;">Subject:</label>
+            <input type="text" id="add-subject" placeholder="e.g., Biology">
+            <label style="font-weight: bold; font-size: 0.9em;">Topic / Details:</label>
+            <input type="text" id="add-topic" placeholder="e.g., Osmosis & Diffusion">
+            <button onclick="saveNewTopic()" class="btn-complete" style="width: 100%; margin-top: 10px; padding: 12px;">Save Topic to Timetable</button>
+        </div>
+    </div>
+
+    <!-- Homework Modal -->
+    <div id="hw-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('hw-modal').classList.remove('active')">&times;</span>
+            <h2>Add Homework</h2>
+            <input type="text" id="hw-subject" placeholder="Subject (e.g. Maths)">
+            <input type="text" id="hw-task" placeholder="Task details (e.g. Sparx M43)">
+            <input type="date" id="hw-due">
+            <button onclick="saveHomework()" class="btn-complete" style="width: 100%;">Save Homework</button>
+        </div>
+    </div>
+
+    <!-- Flashcard Modal -->
+    <div id="flashcard-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('flashcard-modal').classList.remove('active')">&times;</span>
+            <h2>Add Flashcard Deck</h2>
+            <label style="font-weight: bold; font-size: 0.9em;">Deck Name / Topic:</label>
+            <input type="text" id="fc-name" placeholder="e.g., Chemistry Bonding Decks">
+            <label style="font-weight: bold; font-size: 0.9em;">Subject:</label>
+            <input type="text" id="fc-subject" placeholder="e.g., Chemistry">
+            <label style="font-weight: bold; font-size: 0.9em;">External Link (Gizmo / Quizlet / Anki):</label>
+            <input type="url" id="fc-link" placeholder="https://app.gizmo.cards/...">
+            <label style="font-weight: bold; font-size: 0.9em;">Initial Confidence (RAG):</label>
+            <select id="fc-rag" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); width: 100%; margin-bottom: 15px;">
+                <option value="red">🔴 Weak (Review Tomorrow)</option>
+                <option value="amber">🟡 Okay (Review in 3 Days)</option>
+                <option value="green">🟢 Confident (Review in 1 Week)</option>
+            </select>
+            <button onclick="saveFlashcardDeck()" class="btn-complete" style="width: 100%; padding: 12px;">Save Flashcard Deck</button>
+        </div>
+    </div>
+
+    <!-- Song Modal -->
+    <div id="song-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('song-modal').classList.remove('active')">&times;</span>
+            <h2>Add Revision Song / Mnemonic</h2>
+            <label style="font-weight: bold; font-size: 0.9em;">Song Title / Topic:</label>
+            <input type="text" id="song-title" placeholder="e.g., Reactivity Series Rap">
+            <label style="font-weight: bold; font-size: 0.9em;">Subject:</label>
+            <input type="text" id="song-subject" placeholder="e.g., Chemistry">
+            <label style="font-weight: bold; font-size: 0.9em;">Audio / Video Link (YouTube):</label>
+            <input type="url" id="song-link" placeholder="https://youtube.com/watch?v=...">
+            <label style="font-weight: bold; font-size: 0.9em;">Initial Recall Rating (RAG):</label>
+            <select id="song-rag" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); width: 100%; margin-bottom: 15px;">
+                <option value="red">🔴 Weak (Review Tomorrow)</option>
+                <option value="amber">🟡 Okay (Review in 3 Days)</option>
+                <option value="green">🟢 Confident (Review in 2 Weeks)</option>
+            </select>
+            <button onclick="saveSong()" class="btn-complete" style="width: 100%; padding: 12px;">Save Song</button>
+        </div>
+    </div>
+
+    <!-- Master Action Modal (Clicking a task) -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('task-modal').classList.remove('active')">&times;</span>
+            <span id="modal-date-badge" class="badge neutral" style="margin-bottom: 10px;">Date</span>
+            <h2 id="modal-subject" style="margin: 0 0 5px 0;">Subject</h2>
+            <p id="modal-topic" style="margin: 0 0 15px 0; color: var(--text-muted);">Topic Details</p>
+            
+            <button class="btn-complete" onclick="markActiveComplete()" style="width: 100%; padding: 14px; margin-bottom: 15px; font-size: 1.05em; font-weight: bold;">✅ Mark Complete</button>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
+                <h4 style="margin-top: 0;">1. Shift Date (Reschedule)</h4>
+                <div class="btn-group" style="margin-top: 0; gap: 5px;">
+                    <button class="btn-outline" onclick="rescheduleActive(1)">+1 Day</button>
+                    <button class="btn-outline" onclick="rescheduleActive(2)">+2 Days</button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="date" id="custom-reschedule-date" style="margin: 0; flex: 1;">
+                    <button class="btn-outline" onclick="rescheduleActiveCustom()">Move to Date</button>
+                </div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
+                <h4 style="margin-top: 0;">2. Update Status (RAG)</h4>
+                <div class="btn-group" style="margin-top: 0; display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="updateRAG('red')" style="background: #fee2e2; color: #991b1b; border: 1px solid var(--red); width: 100%;">🔴 Weak (Red)</button>
+                    <button onclick="updateRAG('amber')" style="background: #fef3c7; color: #92400e; border: 1px solid var(--amber); width: 100%;">🟡 Okay (Amber)</button>
+                    <button onclick="updateRAG('green')" style="background: #d1fae5; color: #065f46; border: 1px solid var(--green); width: 100%;">🟢 Confident (Green)</button>
+                </div>
+            </div>
+
+            <button class="btn-catchup" onclick="moveToCatchup()" style="width: 100%; padding: 12px; margin-bottom: 10px;">🔄 Send to Catch-up Queue</button>
+            <button onclick="deleteActiveTask()" style="background: white; border: 1px solid var(--red); color: var(--red); width: 100%; padding: 12px;">🗑️ Delete / Remove Topic</button>
+        </div>
+    </div>
+
+<script>
+/* ==========================================
+   1. RAW TIMETABLE DATA (Including all 15 Poems)
+============================================= */
+const rawTimetableText = `
+Mon 05 Oct
+Bio 🔴 Cell Biology — Microscopy & Cell Structures
+Maths 🟡 Algebra — Expanding & Factorising Quadratics
+Chem 🔴 Periodic Table — Electronic Structure & History
+Tue 06 Oct
+Phys 🔴 Scalars & Vectors + Energy Transfers
+Spanish 🟡 T1 — Identity & Relationships
+Eng Lit 🟡 Macbeth — Act 1: Ambition & Witches
+Wed 07 Oct
+Eng Lang 🟡 P1 Q2 — Language Methods & Semantic Fields
+Soc 🟡 Education — Functionalist Perspectives
+Food 🟡 Nutrition — Macronutrients & Functions
+Thu 08 Oct
+Chem 🔴 Atomic Structure — Isotopes & Relative Atomic Mass
+Maths 🟡 Number — Surds & Indices
+RE 🟡 Christianity — Nature of God & Creation (Essay)
+Fri 09 Oct
+Bio 🟡 Cell Biology — Eukaryotes, Prokaryotes & Mitosis
+Phys 🔴 Energy — Transfers & Efficiency
+Eng Lit 🟡 Macbeth — Act 2: Guilt & Soliloquy
+Sat 10 Oct
+Maths 🔴 Algebra — Linear & Quadratic Equations
+Chem 🔴 Bonding — Ionic & Covalent
+Spanish 🔴 Translation — Spanish → English
+Sun 11 Oct
+REST
+Mon 12 Oct
+Bio 🟡 Organisation — Digestive System Enzymes
+Maths 🔴 Simultaneous Equations
+Eng Lang 🟡 P1 Q3 — Structural Shifts
+Tue 13 Oct
+Phys 🔴 Particle Model — Density & State Changes
+Spanish 🟡 T2 — Free-Time Activities & Hobbies
+Eng Lit 🟡 Macbeth — Act 3: Banquo's Ghost
+Wed 14 Oct
+Chem 🔴 Quantitative Chemistry — Moles & Conservation of Mass
+Soc 🟡 Families — Conjugal Roles & Domestic Division
+Food 🟡 Nutrition — Micronutrients & Vitamins
+Thu 15 Oct
+Bio 🟡 Infection & Response — Pathogens
+Maths 🔴 Algebraic Fractions
+RE 🟡 Islam — Core Beliefs & Tawhid (Essay)
+Fri 16 Oct
+🎂 BIRTHDAY REST
+Sat 17 Oct
+🎂 BIRTHDAY REST
+Sun 18 Oct
+🎂 BIRTHDAY REST
+Mon 19 Oct
+Chem 🔴 Energy Changes — Exothermic/Endothermic Profiles
+Maths 🔴 Geometry — Sine & Cosine Rules
+Food 🟡 Food Science — Gelatinisation
+Tue 20 Oct
+Phys 🔴 Half-Life Calculations
+Spanish 🟡 T1 — Future Study & Careers
+Eng Lit 🟡 Macbeth — Act 4 + Power & Conflict
+Wed 21 Oct
+🎂 BIRTHDAY REST
+Thu 22 Oct
+Bio 🟡 Homeostasis — Nervous System & Reflex Arcs
+Maths 🔴 Quadratic Inequalities & Graphs
+RE 🟡 Crime & Punishment — Aims of Punishment
+Fri 23 Oct
+Chem 🔴 Energy Changes — Bond Energy
+Eng Lang 🟡 P1 Q5 — Narrative Structure & Hooks
+Food 🟡 Food Science — Gelatinisation/Starch
+Sat 24 Oct
+Bio 🟡 Homeostasis — Hormonal Control & Blood Glucose
+Eng Lang 🟡 P1 Q5 — Narrative Structure & Narrative Hook
+Food 🟡 Provenance — Food Miles & Sustainability
+Sun 25 Oct
+REST
+Mon 26 Oct
+Bio 🟡 Inheritance — DNA & Meiosis
+Maths 🔴 Completing the Square & Quadratic Formula
+Spanish 🔴 Conditional Tense Triggers
+Tue 27 Oct
+Eng Lit 🟡 Macbeth — Act 5: Kingship, Chaos & Resolution
+Phys 🔴 Newton's Laws Preview
+Soc 🟡 Crime — Social Construction & Statistics
+Wed 28 Oct
+Chem 🔴 Mock 1 Formula & Equation Recall
+Eng Lang 🟡 Mock 1 Timed Section A
+RE 🟡 Peace & Conflict — Just War
+Thu 29 Oct
+Maths 🔴 3D Trigonometry & Vectors
+Bio 🟡 Mock 1 Required Practicals
+Food 🟡 Mock 1 Theory Consolidation
+Fri 30 Oct
+Eng Lit 🟡 Macbeth — Mock 1 Core Quotes + P&C
+Phys 🟡 Mock 1 Equation Recall
+Spanish 🟡 Writing — 150-Word T1
+Sat 31 Oct
+Maths 🔴 Mock 1 Error Fix — Algebra & Number
+Chem 🔴 Mock 1 Core Calculations
+Spanish 🔴 Translation — English → Spanish
+Sun 01 Nov
+REST
+Mon 02 Nov
+Eng Lang 🟡 Mock 1 Section B Writing
+Spanish 🟡 Dictation — Higher Tier
+Maths 🟡 Non-Calculator Past Paper
+Tue 03 Nov
+Eng Lit 🟡 A Christmas Carol — Essay Plan & Context
+Bio 🟡 Mock 1 Definitions
+Food 🟡 Mock 1 8–10 Mark Technique
+Wed 04 Nov
+Chem 🟡 Formula & Titration Review
+Soc 🟡 12-Mark Essay Structure
+RE 🟡 12-Mark Structure
+Thu 05 Nov
+Eng Lang 🟡 Time Management Drill
+Phys 🟡 Core Practicals
+Maths 🟡 Calculator Past Paper
+Fri 06 Nov
+Eng Lit 🟡 Macbeth Essay Plan
+Bio 🟡 Mock 1 Light Review
+Food 🟡 Mock 1 Light Review
+Sat 07 Nov
+Maths 🔴 Geometry & Statistics Final Polish
+Chem 🔴 Bonding & Electrolysis Final Polish
+Spanish 🔴 Vocabulary & Grammar Final Check
+Sun 08 Nov
+REST
+Mon 09 Nov
+Eng Lang 🟢 Maintenance
+Spanish 🟢 Maintenance
+Maths 🟢 Maintenance
+Tue 10 Nov
+Eng Lit 🟢 Maintenance
+Bio 🟢 Maintenance
+Food 🟢 Maintenance
+Wed 11 Nov
+Chem 🟢 Maintenance
+Soc 🟢 Maintenance
+RE 🟢 Maintenance
+Thu 12 Nov
+Eng Lang 🟢 Maintenance
+Phys 🟢 Maintenance
+Maths 🟢 Maintenance
+Fri 13 Nov
+Eng Lit 🟢 Maintenance
+Bio 🟢 Maintenance
+Food 🟢 Maintenance
+Sat 14 Nov
+Maths 🔴 Functions & Graphs
+Chem 🔴 Rates of Reaction
+Spanish 🔴 T2 Popular Culture Introduction
+Sun 15 Nov
+REST
+Mon 16 Nov
+Eng Lang 🟡 Paper 2 Overview
+Spanish 🟡 T3/Communication — Social Media
+Maths 🟡 Algebraic Fractions Level 2
+Tue 17 Nov
+Eng Lit 🟡 AIC — Arthur Birling & Capitalism
+Bio 🟡 Homeostasis — Nervous System
+Food 🟡 Cereals, Breads & Milling
+Wed 18 Nov
+Chem 🟡 Rates & Collision Theory
+Soc 🟡 Social Stratification — Poverty & Inequality
+RE 🟡 Christianity — Worship & Rites
+Thu 19 Nov
+Eng Lang 🟡 P2 Q2 — Summary & Synthesis
+Phys 🟡 Forces & Hooke's Law
+Maths 🟡 Congruence & Similarity
+Fri 20 Nov
+Eng Lit 🟡 AIC — Sybil Birling & Responsibility
+Bio 🟡 Endocrine System & Hormones
+Food 🟡 Meat, Poultry & Alternatives
+Sat 21 Nov
+Maths 🔴 Conditional Probability & Trees
+Phys 🔴 Momentum & Conservation
+Spanish 🟡 T2 — Celebrity Culture & Opinions
+Sun 22 Nov
+REST
+Mon 23 Nov
+Eng Lang 🟡 P2 Q3 — Language Effects & Tone
+Spanish 🔴 Perfect Tense
+Maths 🟡 Bounds & Error Intervals
+Tue 24 Nov
+Eng Lit 🟡 AIC — Inspector Goole & Socialism
+Chem 🟡 Equilibrium
+Food 🟡 Dairy Production & Cheese
+Wed 25 Nov
+Phys 🟡 Newton's Laws
+Soc 🟡 Social Stratification — Welfare & Poverty
+RE 🟡 Islam — Holy Books & Prophethood
+Thu 26 Nov
+Eng Lang 🟡 P2 Q4 — Comparing Viewpoints
+Spanish 🔴 T2 Festivals & Traditions
+Maths 🟡 Quadratic Sequences
+Fri 27 Nov
+Eng Lit 🟡 AIC — Sheila & Eric
+Bio 🟡 DNA & Genome
+Food 🟡 Raising Agents
+Sat 28 Nov
+Maths 🔴 Advanced Vectors
+Phys 🔴 Waves — Speed & Types
+Spanish 🔴 Higher-Tier Grammar
+Sun 29 Nov
+REST
+Mon 30 Nov
+Eng Lang 🟡 P2 Q5 — Persuasive Speech
+Spanish 🟡 Celebrity Culture — Pros/Cons
+Maths 🟡 Composite & Inverse Functions
+Tue 01 Dec
+Eng Lit 🟡 AIC — 1912 vs 1945 Context
+Chem 🟡 Alkanes & Fractional Distillation
+Food 🟡 Special Diets
+Wed 02 Dec
+Phys 🟡 Electromagnetic Spectrum
+Soc 🟡 Crime — Functionalism & Marxism
+RE 🟡 Abortion & Fertility Treatment
+Thu 03 Dec
+Eng Lang 🟡 P2 Q2 — Information Retrieval
+Bio 🟡 Genetic Disorders & Punnett Squares
+Maths 🟡 Similar Shapes & Scale Factors
+Fri 04 Dec
+Eng Lit 🟡 Ozymandias — Power & Hubris
+Chem 🟡 Alkenes & Cracking
+Food 🟡 Costing & Meal Planning
+Sat 05 Dec
+Maths 🔴 Iteration & Numerical Methods
+Phys 🔴 Electromagnetism & Motor Effect
+Spanish 🔴 T3 Environment & Climate Change
+Sun 06 Dec
+REST
+Mon 07 Dec
+Eng Lang 🟡 P2 Q3 — Perspective & Tone
+Spanish 🔴 Comparatives & Superlatives
+Maths 🟡 Histograms
+Tue 08 Dec
+Eng Lit 🟡 London — Urban Decay & Oppression
+Bio 🟡 Variation & Natural Selection
+Food 🟡 Energy Needs & BMR/PAL
+Wed 09 Dec
+Chem 🟡 Alcohols & Carboxylic Acids
+Soc 🟡 Crime — Gender & Ethnicity
+RE 🟡 Baptism & Holy Communion
+Thu 10 Dec
+Eng Lang 🟡 P2 Q4 — Writer's Methods
+Phys 🟡 Life Cycle of Stars
+Maths 🟡 Advanced Circle Theorems
+Fri 11 Dec
+Eng Lit 🟡 Prelude — Nature's Power
+Bio 🟡 Ecology — Communities & Factors
+Food 🟡 Food Choice & Sensory Testing
+Sat 12 Dec
+Maths 🔴 Advanced Trigonometry
+Chem 🔴 Polymers
+Spanish 🔴 T3 — Rural vs City Living
+Sun 13 Dec
+REST
+Mon 14 Dec
+Eng Lang 🟡 Broadsheet Article Writing
+Spanish 🔴 Near Future vs Simple Future
+Maths 🟡 Compound Measures
+Tue 15 Dec
+Eng Lit 🟡 My Last Duchess
+Phys 🟡 Red-Shift & Big Bang
+Food 🟡 Packaging & Labelling
+Wed 16 Dec
+Chem 🟡 Purity & Chromatography
+Soc 🟡 Media Representation of Crime
+RE 🟡 Religion & Equality
+Thu 17 Dec
+Eng Lang 🟡 SPaG & Rhetorical Devices
+Bio 🟡 Trophic Levels & Biomass
+Maths 🟡 Triple Brackets & Surds
+Fri 18 Dec
+Eng Lit 🟡 Charge of the Light Brigade
+Phys 🟡 Generators & Transformers
+Food 🟡 Technological Developments
+Sat 19 Dec
+Maths 🔴 Simultaneous Equations with Quadratics
+Bio 🔴 Biodiversity & Environmental Change
+Spanish 🔴 Renewable Energy & Eco Living
+Sun 20 Dec
+REST
+Mon 21 Dec
+Eng Lang 🟡 P2 Q2 — Differences
+Spanish 🔴 Advanced Subjunctive
+Maths 🟡 Transformations & Matrices
+Tue 22 Dec
+Eng Lit 🟡 Exposure
+Chem 🟡 Evolution of Atmosphere
+Food 🟡 Culinary Traditions
+Wed 23 Dec
+Phys 🟡 Synoptic Equations
+Soc 🟡 Crime Prevention & Punishment
+RE 🟡 Pilgrimage & Church Ministries
+Thu 24 Dec
+🎄 CHRISTMAS REST
+Fri 25 Dec
+🎄 CHRISTMAS REST
+Sat 26 Dec
+🎄 CHRISTMAS REST
+Sun 27 Dec
+🎄 CHRISTMAS REST
+Mon 28 Dec
+Eng Lang 🟡 P2 Q4 — Tracing Ideas
+Spanish 🔴 Online Privacy & Cyberbullying
+Maths 🟡 Velocity-Time Graphs
+Tue 29 Dec
+Eng Lit 🟡 Storm on the Island
+Bio 🟡 Ecology Required Practical
+Food 🟡 Preservation Methods
+Wed 30 Dec
+Chem 🟡 Potable Water & LCAs
+Soc 🟡 Observation & Pilot Studies
+RE 🟡 Islam — Festivals
+Thu 31 Dec
+Eng Lang 🟡 Formal Letter
+Phys 🟡 Braking Distances
+Maths 🟡 Exponential Graphs
+Fri 01 Jan
+🎆 NEW YEAR REST
+Sat 02 Jan
+Maths 🔴 Surds & Rationalising
+Phys 🔴 Waves & Seismic Waves
+Spanish 🔴 Sustainable Tourism
+Sun 03 Jan
+REST
+Mon 04 Jan
+Eng Lang 🟡 P2 Timed Section A
+Spanish 🔴 Adjective Agreement & Word Order
+Maths 🟡 Algebraic Fractions
+Tue 05 Jan
+Eng Lit 🟡 Bayonet Charge
+Bio 🟡 Genetics & Inheritance
+Food 🟡 Emulsification
+Wed 06 Jan
+Chem 🟡 Sustainable Development & Corrosion
+Soc 🟡 Education — Class/Gender/Ethnicity
+RE 🟡 Church in Community
+Thu 07 Jan
+Eng Lang 🟡 P2 Timed Section B
+Phys 🟡 Electromagnetism & Generators
+Maths 🟡 Loci & Constructions
+Fri 08 Jan
+Eng Lit 🟡 Remains
+Bio 🟡 Ecology & Biodiversity
+Food 🟡 Aeration & Raising Agents
+Sat 09 Jan
+Maths 🔴 Quadratics — Formula & Completing Square
+Chem 🔴 Greenhouse Gases
+Spanish 🔴 T3 Writing — 150 Words
+Sun 10 Jan
+REST
+Mon 11 Jan
+Eng Lang 🟡 Mock 2 Full Paper
+Spanish 🟡 T3 Region & Housing
+Maths 🟡 Mock 2 Calculator Paper
+Tue 12 Jan
+Eng Lit 🟡 Poppies
+Phys 🟡 Space Physics Review
+Food 🟡 Mock 2 Food Science
+Wed 13 Jan
+Chem 🟡 Hardest Organic Topics
+Soc 🟡 Quantitative vs Qualitative
+RE 🟡 12-Mark Essay
+Thu 14 Jan
+Eng Lang 🟡 Error Analysis & SPaG
+Bio 🟡 Protein Synthesis
+Maths 🟡 Mock 2 Non-Calculator
+Fri 15 Jan
+Eng Lit 🟡 War Photographer
+Phys 🟡 Fleming's Rule
+Food 🟡 8–10 Mark Technique
+Sat 16 Jan
+Maths 🔴 Statistics & Box Plots Error Fix
+Bio 🔴 Ecology & Genetics Error Fix
+Spanish 🟡 Speaking — Role Play/Photo Card
+Sun 17 Jan
+REST
+Mon 18 Jan
+Eng Lang 🔴 P2 Q4 Synthesis
+Spanish 🔴 High-Tier Translation
+Maths 🔴 Iteration & Bounds
+Tue 19 Jan
+Eng Lit 🟡 Tissue
+Chem 🔴 Equilibrium & Calculations
+Food 🟡 Mock 2 Final Polish
+Wed 20 Jan
+Phys 🟡 Waves & Electromagnetism
+Soc 🟡 Questionnaires & Interviews
+RE 🟡 Mock 2 Final Polish
+Thu 21 Jan
+Eng Lang 🟡 Mock 2 Light Review
+Bio 🟡 Mock 2 Light Review
+Maths 🟡 Mock 2 Light Review
+Fri 22 Jan
+Eng Lit 🟡 The Emigrée
+Chem 🟡 Mock 2 Light Review
+Food 🟡 Mock 2 Light Review
+Sat 23 Jan
+Maths 🔴 Advanced Similar Shapes & Vectors
+Phys 🔴 Synoptic Mechanics
+Spanish 🔴 General Conversation
+Sun 24 Jan
+REST
+Mon 25 Jan
+Eng Lang 🟡 Maintenance
+Spanish 🟡 Maintenance
+Maths 🟡 Maintenance
+Tue 26 Jan
+Eng Lit 🟡 Kamikaze
+Bio 🟡 Maintenance
+Food 🟡 Maintenance
+Wed 27 Jan
+Chem 🟡 Maintenance
+Soc 🟡 Maintenance
+RE 🟡 Maintenance
+Thu 28 Jan
+Eng Lang 🟡 Maintenance
+Phys 🟡 Maintenance
+Maths 🟡 Maintenance
+Fri 29 Jan
+Eng Lit 🟡 Checking Out Me History
+Bio 🟡 Maintenance
+Food 🟡 Maintenance
+Sat 30 Jan
+Maths 🔴 Tangent to a Circle
+Chem 🔴 Haber Process
+Spanish 🔴 Si Clauses + Higher Grammar
+Sun 31 Jan
+REST
+Mon 01 Feb
+Eng Lang 🟡 SPaG — Apostrophes & Homophones
+Spanish 🟡 T1 Education & Work
+Maths 🟡 Advanced Circle Theorems
+Tue 02 Feb
+Eng Lit 🟡 Biodiversity & Waste
+Bio 🟡 Biodiversity & Waste
+Food 🟡 Dietary Guidelines
+Wed 03 Feb
+Chem 🟡 NPK Fertilisers
+Soc 🟡 Families — Divorce/Cohabitation
+RE 🟡 Origins of Universe & Science
+Thu 04 Feb
+Eng Lang 🟡 P1 Q2 — Short Quote Embedding
+Phys 🟡 Energy & Circuit Power
+Maths 🟡 Factorising Quadratics
+Fri 05 Feb
+Eng Lit 🟡 Storm vs Exposure (Comparison)
+Bio 🟡 Global Warming & Deforestation
+Food 🟡 Raising Agents
+Sat 06 Feb
+Maths 🔴 3D Vectors & Geometrical Proof
+Phys 🔴 Nuclear Radiation
+Spanish 🔴 Mixed-Theme Listening Practice
+`;
+
+/* ==========================================
+   2. APP LOGIC & STATE
+============================================= */
+
+let tasks = [];
+let homework = [];
+let flashcards = [];
+let songs = [];
+let activeTaskIndex = null;
+
+const PARSE_YEAR = 2026; 
+
+function getTodayString() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function parseTimetable() {
+    const lines = rawTimetableText.trim().split('\n');
+    let currentDateStr = null;
+    let parsedTasks = [];
+    
+    const dateRegex = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(\d{2})\s+([A-Za-z]{3})$/i;
+    
+    lines.forEach(line => {
+        line = line.trim();
+        if(!line) return;
+        
+        let dateMatch = line.match(dateRegex);
+        if(dateMatch) {
+            let dayNum = dateMatch[2];
+            let monthStr = dateMatch[3];
+            let dateObj = new Date(`${dayNum} ${monthStr} ${PARSE_YEAR}`);
+            if (dateObj.getMonth() < 7) { 
+                dateObj = new Date(`${dayNum} ${monthStr} ${PARSE_YEAR + 1}`);
+            }
+            
+            let y = dateObj.getFullYear();
+            let m = String(dateObj.getMonth()+1).padStart(2,'0');
+            let d = String(dateObj.getDate()).padStart(2,'0');
+            currentDateStr = `${y}-${m}-${d}`;
+            return;
+        }
+        
+        if (line.includes("REST")) {
+            parsedTasks.push({
+                id: Date.now() + Math.random(),
+                date: currentDateStr,
+                subject: "REST",
+                topic: line,
+                status: null,
+                rag: null,
+                isRest: true
+            });
+            return;
+        }
+
+        let ragMatch = line.match(/(🔴|🟡|🟢)/);
+        let ragVal = null;
+        if(ragMatch) {
+            if(ragMatch[0] === '🔴') ragVal = 'red';
+            if(ragMatch[0] === '🟡') ragVal = 'amber';
+            if(ragMatch[0] === '🟢') ragVal = 'green';
+        }
+
+        let parts = line.split(/(🔴|🟡|🟢)/);
+        let subject = parts[0].trim();
+        let topic = parts[2] ? parts[2].trim() : "Review";
+        
+        parsedTasks.push({
+            id: Date.now() + Math.random(),
+            date: currentDateStr,
+            subject: subject,
+            topic: topic,
+            status: null,
+            rag: ragVal,
+            isRest: false
+        });
+    });
+    
+    return parsedTasks;
+}
+
+function initData() {
+    let savedTasks = localStorage.getItem('gcse_tasks');
+    if (savedTasks) {
+        tasks = JSON.parse(savedTasks);
+    } else {
+        tasks = parseTimetable();
+        saveTasks();
+    }
+    
+    homework = JSON.parse(localStorage.getItem('gcse_homework') || '[]');
+    flashcards = JSON.parse(localStorage.getItem('gcse_flashcards') || '[]');
+    songs = JSON.parse(localStorage.getItem('gcse_songs') || '[]');
+}
+
+function saveTasks() { localStorage.setItem('gcse_tasks', JSON.stringify(tasks)); }
+function saveHomeworkData() { localStorage.setItem('gcse_homework', JSON.stringify(homework)); }
+function saveFlashcardData() { localStorage.setItem('gcse_flashcards', JSON.stringify(flashcards)); }
+function saveSongData() { localStorage.setItem('gcse_songs', JSON.stringify(songs)); }
+
+/* ==========================================
+   3. UI & RENDERING
+============================================= */
+
+function navigate(viewId) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#sidebar a').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById(`view-${viewId}`).classList.add('active');
+    document.getElementById(`nav-${viewId}`).classList.add('active');
+    
+    if (viewId === 'today') renderToday();
+    if (viewId === 'timetable') renderTimetable();
+    if (viewId === 'catchup') renderCatchup();
+    if (viewId === 'homework') renderHomework();
+    if (viewId === 'flashcards') renderFlashcards();
+    if (viewId === 'songs') renderSongs();
+    if (viewId === 'progress') renderStats();
+}
+
+function renderToday() {
+    let today = getTodayString();
+    let displayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    document.getElementById('today-date-display').innerText = displayDate;
+    
+    let todayTasks = tasks.filter(t => t.date === today);
+    let container = document.getElementById('today-tasks');
+    container.innerHTML = '';
+    
+    if(todayTasks.length === 0) {
+        container.innerHTML = `<div class="card"><p>No tasks scheduled for today. Enjoy a break!</p></div>`;
+        return;
+    }
+    
+    todayTasks.forEach(task => container.appendChild(createTaskCard(task)));
+}
+
+function renderTimetable(searchQuery = '') {
+    let container = document.getElementById('timetable-list');
+    container.innerHTML = '';
+    
+    let filtered = tasks;
+    if (searchQuery) {
+        let q = searchQuery.toLowerCase();
+        filtered = tasks.filter(t => t.subject.toLowerCase().includes(q) || t.topic.toLowerCase().includes(q));
+    }
+    
+    filtered.sort((a,b) => new Date(a.date) - new Date(b.date));
+    let grouped = {};
+    filtered.forEach(t => {
+        if(!grouped[t.date]) grouped[t.date] = [];
+        grouped[t.date].push(t);
+    });
+    
+    for (const [dateStr, dayTasks] of Object.entries(grouped)) {
+        let dayObj = new Date(dateStr);
+        let displayStr = dayObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        
+        let html = `<div class="day-group">
+            <div class="day-header">
+                <span>${displayStr}</span>
+                <button class="btn-outline" style="padding: 4px 8px; font-size: 0.8em;" onclick="openAddModal('${dateStr}')">+ Add</button>
+            </div>
+            <div class="day-tasks-list">`;
+        
+        dayTasks.forEach(task => {
+            let statusIcon = task.status === 'completed' ? '✅ ' : '';
+            let ragColor = task.rag === 'red' ? '🔴' : task.rag === 'amber' ? '🟡' : task.rag === 'green' ? '🟢' : '';
+            
+            html += `
+                <div class="day-task-item" onclick="openTaskModal('${task.id}')">
+                    <div style="flex:1">
+                        <span style="font-weight: 600; margin-right: 10px;">${task.subject}</span>
+                        <span style="color: var(--text-muted); font-size: 0.9em;">${statusIcon}${ragColor} ${task.topic}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+        container.innerHTML += html;
+    }
+}
+
+function filterTimetable() {
+    renderTimetable(document.getElementById('timetable-search').value);
+}
+
+function renderCatchup() {
+    let container = document.getElementById('catchup-tasks');
+    container.innerHTML = '';
+    let today = getTodayString();
+    
+    let missedTasks = tasks.filter(t => t.date < today && t.status !== 'completed' && !t.isRest);
+    
+    if (missedTasks.length === 0) {
+        container.innerHTML = `<div class="card"><p>No caught-up tasks! You are completely up to date. 🎉</p></div>`;
+        return;
+    }
+    missedTasks.forEach(t => container.appendChild(createTaskCard(t)));
+}
+
+function renderHomework() {
+    let container = document.getElementById('homework-list');
+    container.innerHTML = '';
+    homework.forEach((hw, i) => {
+        container.innerHTML += `
+            <div class="card" style="border-left: 5px solid var(--rest);">
+                <div class="task-subject">${hw.subject}</div>
+                <div class="task-topic">${hw.task}</div>
+                <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">Due: ${hw.due}</div>
+                <button class="btn-complete" onclick="deleteHomework(${i})">Mark Done</button>
+            </div>
+        `;
+    });
+}
+
+function saveHomework() {
+    let subject = document.getElementById('hw-subject').value;
+    let task = document.getElementById('hw-task').value;
+    let due = document.getElementById('hw-due').value;
+    if(!subject || !task) return alert("Fill in subject and task");
+    homework.push({subject, task, due});
+    saveHomeworkData();
+    document.getElementById('hw-modal').classList.remove('active');
+    renderHomework();
+}
+
+function deleteHomework(index) {
+    homework.splice(index, 1);
+    saveHomeworkData();
+    renderHomework();
+}
+
+function renderFlashcards() {
+    let container = document.getElementById('flashcards-list');
+    container.innerHTML = '';
+    flashcards.forEach((fc, i) => {
+        let rColor = fc.rag === 'red' ? 'fee2e2' : fc.rag === 'amber' ? 'fef3c7' : 'd1fae5';
+        let bColor = fc.rag === 'red' ? 'ef4444' : fc.rag === 'amber' ? 'f59e0b' : '10b981';
+        container.innerHTML += `
+            <div class="card" style="border-left: 5px solid #${bColor}; background: #${rColor}33;">
+                <div class="task-subject">${fc.name}</div>
+                <div class="task-topic">${fc.subject}</div>
+                <a href="${fc.link}" target="_blank" class="btn-outline" style="margin-bottom: 15px; display: inline-block;">Open Deck ↗</a>
+                <div>
+                    <button style="font-size: 0.8em; padding: 4px 8px;" onclick="updateFCRag(${i}, 'red')">🔴</button>
+                    <button style="font-size: 0.8em; padding: 4px 8px;" onclick="updateFCRag(${i}, 'amber')">🟡</button>
+                    <button style="font-size: 0.8em; padding: 4px 8px;" onclick="updateFCRag(${i}, 'green')">🟢</button>
+                    <button style="font-size: 0.8em; padding: 4px 8px; color: var(--red);" onclick="deleteFlashcard(${i})">🗑️</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function saveFlashcardDeck() {
+    let name = document.getElementById('fc-name').value;
+    let subject = document.getElementById('fc-subject').value;
+    let link = document.getElementById('fc-link').value;
+    let rag = document.getElementById('fc-rag').value;
+    if(!name || !link) return alert("Requires Name and Link");
+    flashcards.push({name, subject, link, rag});
+    saveFlashcardData();
+    document.getElementById('flashcard-modal').classList.remove('active');
+    renderFlashcards();
+}
+
+function updateFCRag(index, rag) { flashcards[index].rag = rag; saveFlashcardData(); renderFlashcards(); }
+function deleteFlashcard(index) { flashcards.splice(index, 1); saveFlashcardData(); renderFlashcards(); }
+
+function renderSongs() {
+    let container = document.getElementById('songs-list');
+    container.innerHTML = '';
+    songs.forEach((s, i) => {
+        let rColor = s.rag === 'red' ? 'fee2e2' : s.rag === 'amber' ? 'fef3c7' : 'd1fae5';
+        let bColor = s.rag === 'red' ? 'ef4444' : s.rag === 'amber' ? 'f59e0b' : '10b981';
+        container.innerHTML += `
+            <div class="card" style="border-left: 5px solid #${bColor}; background: #${rColor}33;">
+                <div class="task-subject">${s.title}</div>
+                <div class="task-topic">${s.subject}</div>
+                <a href="${s.link}" target="_blank" class="btn-outline" style="margin-bottom: 15px; display: inline-block;">Play 🎵 ↗</a>
+                <div>
+                    <button style="font-size: 0.8em; padding: 4px 8px;" onclick="updateSongRag(${i}, 'red')">🔴</button>
+                    <button style="font-size: 0.8em; padding: 4px 8px;" onclick="updateSongRag(${i}, 'amber')">🟡</button>
+                    <button style="font-size: 0.8em; padding: 4px 8px;" onclick="updateSongRag(${i}, 'green')">🟢</button>
+                    <button style="font-size: 0.8em; padding: 4px 8px; color: var(--red);" onclick="deleteSong(${i})">🗑️</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function saveSong() {
+    let title = document.getElementById('song-title').value;
+    let subject = document.getElementById('song-subject').value;
+    let link = document.getElementById('song-link').value;
+    let rag = document.getElementById('song-rag').value;
+    if(!title || !link) return alert("Requires Title and Link");
+    songs.push({title, subject, link, rag});
+    saveSongData();
+    document.getElementById('song-modal').classList.remove('active');
+    renderSongs();
+}
+
+function updateSongRag(index, rag) { songs[index].rag = rag; saveSongData(); renderSongs(); }
+function deleteSong(index) { songs.splice(index, 1); saveSongData(); renderSongs(); }
+
+function renderStats() {
+    let total = tasks.filter(t => !t.isRest).length;
+    let completed = tasks.filter(t => t.status === 'completed' && !t.isRest).length;
+    let pct = total === 0 ? 0 : Math.round((completed/total)*100);
+    
+    let html = `
+        <h2 style="margin-top:0">Completion: ${completed} / ${total} tasks (${pct}%)</h2>
+        <div style="background: var(--border); height: 20px; border-radius: 10px; overflow: hidden; margin-bottom: 20px;">
+            <div style="background: var(--green); height: 100%; width: ${pct}%"></div>
+        </div>
+    `;
+    document.getElementById('stats-container').innerHTML = html;
+}
+
+function exportData() {
+    let data = { tasks, homework, flashcards, songs };
+    let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = `GCSE_Backup_${getTodayString()}.json`;
+    a.click();
+}
+
+function factoryReset() {
+    if(confirm("Are you sure? This will wipe ALL progress and revert to the master timetable.")) {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+/* ==========================================
+   4. TASK INTERACTION (MODAL & UTILS)
+============================================= */
+
+function createTaskCard(task) {
+    let div = document.createElement('div');
+    
+    if (task.isRest) {
+        div.className = 'card task-card task-rest';
+        div.innerHTML = `<h3 style="margin:0;">${task.topic}</h3><p style="margin:5px 0 0 0; font-size: 0.9em; color: var(--text-muted);">Take a break!</p>`;
+        return div;
+    }
+    
+    let ragClass = task.rag === 'red' ? 'rag-red' : task.rag === 'amber' ? 'rag-amber' : 'rag-green';
+    div.className = `card task-card ${ragClass}`;
+    
+    if (task.status === 'completed') {
+        div.style.opacity = '0.5';
+        div.style.textDecoration = 'line-through';
+    }
+    
+    div.innerHTML = `
+        <div class="task-subject">${task.subject}</div>
+        <div class="task-topic">${task.topic}</div>
+        <div class="badge neutral">${task.date}</div>
+    `;
+    
+    div.onclick = () => openTaskModal(task.id);
+    return div;
+}
+
+function getTaskIndex(id) {
+    return tasks.findIndex(t => String(t.id) === String(id));
+}
+
+function openTaskModal(id) {
+    activeTaskIndex = getTaskIndex(id);
+    let task = tasks[activeTaskIndex];
+    
+    document.getElementById('modal-subject').innerText = task.subject;
+    document.getElementById('modal-topic').innerText = task.topic;
+    document.getElementById('modal-date-badge').innerText = task.date;
+    
+    document.getElementById('task-modal').classList.add('active');
+}
+
+function markActiveComplete() {
+    if(activeTaskIndex === null) return;
+    tasks[activeTaskIndex].status = 'completed';
+    saveTasks();
+    document.getElementById('task-modal').classList.remove('active');
+    refreshCurrentView();
+}
+
+function updateRAG(ragVal) {
+    if(activeTaskIndex === null) return;
+    tasks[activeTaskIndex].rag = ragVal;
+    saveTasks();
+    document.getElementById('task-modal').classList.remove('active');
+    refreshCurrentView();
+}
+
+function rescheduleActive(daysToAdd) {
+    if(activeTaskIndex === null) return;
+    let d = new Date(tasks[activeTaskIndex].date);
+    d.setDate(d.getDate() + daysToAdd);
+    tasks[activeTaskIndex].date = d.toISOString().split('T')[0];
+    saveTasks();
+    document.getElementById('task-modal').classList.remove('active');
+    refreshCurrentView();
+}
+
+function rescheduleActiveCustom() {
+    let customD = document.getElementById('custom-reschedule-date').value;
+    if(!customD) return;
+    tasks[activeTaskIndex].date = customD;
+    saveTasks();
+    document.getElementById('task-modal').classList.remove('active');
+    refreshCurrentView();
+}
+
+function moveToCatchup() {
+    if(activeTaskIndex === null) return;
+    let d = new Date();
+    d.setDate(d.getDate() - 1);
+    tasks[activeTaskIndex].date = d.toISOString().split('T')[0];
+    tasks[activeTaskIndex].status = null;
+    saveTasks();
+    document.getElementById('task-modal').classList.remove('active');
+    navigate('catchup');
+}
+
+function deleteActiveTask() {
+    if(activeTaskIndex === null) return;
+    if(confirm("Delete this topic entirely?")) {
+        tasks.splice(activeTaskIndex, 1);
+        saveTasks();
+        document.getElementById('task-modal').classList.remove('active');
+        refreshCurrentView();
+    }
+}
+
+function openAddModal(dateStr = '') {
+    document.getElementById('add-date').value = dateStr || getTodayString();
+    document.getElementById('add-modal').classList.add('active');
+}
+
+function saveNewTopic() {
+    let date = document.getElementById('add-date').value;
+    let subject = document.getElementById('add-subject').value;
+    let topic = document.getElementById('add-topic').value;
+    if(!date || !subject || !topic) return alert("Fill all fields");
+    
+    tasks.push({
+        id: Date.now() + Math.random(),
+        date: date,
+        subject: subject,
+        topic: topic,
+        status: null,
+        rag: 'amber',
+        isRest: false
+    });
+    
+    saveTasks();
+    document.getElementById('add-modal').classList.remove('active');
+    refreshCurrentView();
+}
+
+function refreshCurrentView() {
+    let activeSection = document.querySelector('.view-section.active');
+    if (activeSection.id === 'view-today') renderToday();
+    if (activeSection.id === 'view-timetable') renderTimetable(document.getElementById('timetable-search').value);
+    if (activeSection.id === 'view-catchup') renderCatchup();
+}
+
+window.onload = () => {
+    initData();
+    navigate('today');
+};
+
+</script>
+</body>
+</html>
